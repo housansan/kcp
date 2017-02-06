@@ -30,7 +30,7 @@ TCP 是如何进行可靠的数据传输呢？前面已经说了，是通过 ARQ
 
 ![接收窗口](rcv.png)
 
-[图片出处](http://www.tcpipguide.com/free/t_TCPSlidingWindowAcknowledgmentSystemForDataTranspo-6.htm)
+[图片出处](http://www.tcpipguide.com/free/t_TCPSlidingWindowDataTransferandAcknowledgementMech-2.htm)
 
 上面这两张图已经说得很明白了。ARQ 的各种算法，以及 KCP 的具体实现，都需要在这两张图的概念下进行展开。
 
