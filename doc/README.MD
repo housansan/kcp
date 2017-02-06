@@ -61,6 +61,9 @@ TCP 是如何进行可靠的数据传输呢？前面已经说了，是通过 ARQ
  cwnd     | congestion window         | 拥塞窗口，这个概念很关键
  ssthresh | slow start threshold      | 慢启动阈值，这个也是核心概念之一
  seg      | segment                   | 数据包在网络层级中不同的地方名字也不同，在链路层比如以太网，数据叫帧（frame），往上到 IP 层叫包（packet），再往上到 tcp/kcp 这层就叫数据段（segment），UDP 中叫数据报（datagram）
+ xmit     | transmit                  | 通信领域专业缩写，表示传输
+ tx_      | transport                 | 通信领域专业缩写，表示传输
+ rx_      | receive                   | 通信领域专业缩写，表示接收
 
 
 ### KCP 的数据缓冲区
