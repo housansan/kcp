@@ -56,7 +56,7 @@ TCP 是如何进行可靠的数据传输呢？前面已经说了，是通过 ARQ
  sn       | serial number             | 表示这个数据包的序列号，每个包都有递增的sn
  conv     | conversation              | 会话号，一个 kcp 连接用的是 conv 标识的
  cmd      | command                   | 这个表示这个 segment 是干嘛的，ack 表示确认，psh 表示推送数据
- ts       | timestamp                 | 时间戳，这个表示从 1970 年 1 月 1 日（00:00:00 GMT）以来的秒数
+ ts       | timestamp                 | 时间戳，这个其实就是一个普通的时间戳，大多数kcp实现都是用当前毫秒数的低 32-bit 来表示的。超过 2^32 之后，重新从0计数。因为是无符号数，所以只考虑差值的话，算法都是对的。
  frg      | fragment                  | 数据分片，如果 kcp 是 stream 模式，则所有的数据包 frg 都是 0，否则一个大数据包将依据mss被拆成若干小包，他们的frag依次递增
  cwnd     | congestion window         | 拥塞窗口，这个概念很关键
  ssthresh | slow start threshold      | 慢启动阈值，这个也是核心概念之一
