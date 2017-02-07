@@ -50,7 +50,7 @@ TCP 是如何进行可靠的数据传输呢？前面已经说了，是通过 ARQ
  psh      | push                      | psh 表示推送数据
  mtu      | maximum transmission unit | 最大传输单元，这个表示在一个特定的硬件链路上，一个 IP 包的最大长度（字节）
  mss      | maximum segment size      | mtu - 20 - tcp/kcp header，比如 1500 的 mtu，则 tcp 的 mss 为 1460（1500 - 20 - 20）
- rto      | round-trip timeout        | 表示发出数据后等待对方ack的超时
+ rto      | retransmission timeout    | 表示发出数据后等待对方ack的超时
  rtt      | round-trip time           | 从一个数据发出，到收到对应的 ack 这之间的时间间隔 
  srtt     | smoothed rtt              | 平滑后的 rtt
  sn       | serial number             | 表示这个数据包的序列号，每个包都有递增的sn
