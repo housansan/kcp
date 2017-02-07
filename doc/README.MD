@@ -72,6 +72,28 @@ KCP 协议的实现中有四个缓冲区，每个缓冲区都是用的循环双�
 
 ![KCP 缓冲区](kcp_buffer.png)
 
+### 关于 kcp 使用的时间戳
+
+kcp 的测试程序里面对于 ts 的选取在linux系统下用的是系统时间（gettimeofday），但是这种方式可能会遇到修改系统时间导致的 ts 跳变，从而可能导致超时重传之类的其他问题。
+
+Linux 系统用的是 tcp_time_stamp，这个宏是这样定义的：
+
+```c
+/* TCP timestamps are only 32-bits, this causes a slight
+ * complication on 64-bit systems since we store a snapshot
+ * of jiffies in the buffer control blocks below.  We decided
+ * to use only the low 32-bits of jiffies and hide the ugly
+ * casts with the following macro.
+ */
+#define tcp_time_stamp		((__u32)(jiffies))
+```
+
+具体参见 [linux 源码](https://github.com/torvalds/linux/blob/8f18e4d03ed8fa5e4a300c94550533bd8ce4ff9a/include/net/tcp.h)
+
+jiffies 是 linux 系统启动后产生的节拍数，启动时内核将这个变量置零，此后每次时钟中断都会增加这个值，每秒会产生 HZ 次中断，所以系统运行时间就是 jiffies/HZ 秒。
+
+而 kcp 是在应用层实现的协议，所以也应该使用这种 tick 形式的时间戳。在 Windows 下，可以使用 QueryPerformanceFrequency 和 QueryPerformanceCounter 获取单调递增的 tick；在 linux 系统下可以用 clock()。
+
 未完待续。。
 
 ### 特别感谢
