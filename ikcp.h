@@ -257,37 +257,37 @@ struct IKCPSEG
 {
 	struct IQUEUEHEAD node;
 
-	// �Ự�ţ�ÿ��kcp���Ӷ���һ���Ự��
+	// 会话号，每个kcp连接都有一个会话号
 	IUINT32 conv;
-	// �������Ϊһ��4��֮һ��
+	// 命令，必须为一下4个之一：
 	// IKCP_CMD_PUSH = 81;		// cmd: push data
 	// IKCP_CMD_ACK  = 82;		// cmd: ack
 	// IKCP_CMD_WASK = 83;		// cmd: window probe (ask)
 	// IKCP_CMD_WINS = 84;		// cmd: window size (tell)
 	IUINT32 cmd;
-	// ���kcp����ʹ��streamģʽ��frgΪ0
-	// ����ǰ�ģʽ����frg��5,4,3,2,1,0���֣�frgΪ0��ʾ���һ����
+	// 如果kcp连接使用stream模式则frg为0
+	// 如果是包模式，则frg是5,4,3,2,1,0这种，frg为0表示最后一个包
 	IUINT32 frg;
-	// ���ͷ��Ŀ��ô��ڴ�С
+	// 发送方的可用窗口大小
 	IUINT32 wnd;
-	// ���ͷ����͸�segmentʱ��ʱ�����timestamp��
+	// 发送方发送该segment时的时间戳（timestamp）
 	IUINT32 ts;
-	// ���к�
+	// 序列号
 	IUINT32 sn;
-	// ���ͷ���rcv_nxt
+	// 发送方的rcv_nxt
 	IUINT32 una;
-	// ÿ�� segment Я�������ݴ�С�����Ϊ mss
+	// 每个 segment 携带的数据大小，最大为 mss
 	IUINT32 len;
-	// �� segment ���ط���ʱʱ�����resend timestamp��
+	// 该 segment 的重发超时时间戳（resend timestamp）
 	IUINT32 resendts;
-	// �������ݵ��յ�ack�ĳ�ʱ
+	// 发送数据到收到ack的超时
 	IUINT32 rto;
-	// ��
+	// ？
 	IUINT32 fastack;
-	// ֻҪ��� segment �����͹�һ�Σ��� xmit �� 1
-	// ������������ڰ����û����ݵİ�
+	// 只要这个 segment 被发送过一次，则 xmit 加 1
+	// 这个计数器用于包含用户数据的包
 	IUINT32 xmit;
-	// �û�����
+	// 用户数据
 	char data[1];
 };
 

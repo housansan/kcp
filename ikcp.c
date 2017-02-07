@@ -353,9 +353,9 @@ void ikcp_setoutput(ikcpcb *kcp, int (*output)(const char *buf, int len,
 //---------------------------------------------------------------------
 // user/upper level recv: returns size, returns below zero for EAGAIN
 //---------------------------------------------------------------------
-// ÊÕÈ¡Êı¾İ£ºsystem call(udp recv)->buffer->queue->data
-// 1¡¢streamÄ£Ê½£¬Ò»´ÎÖ»È¡Ò»¸ösegment
-// 2¡¢°üÄ£Ê½£¬Ò»´ÎÈ¡¾¡Á¿¶àµÄÊı¾İ£¨½« frg 5,4,3,2,1,0ÏµÁĞÊı¾İ¶¼È¡³ö£©
+// æ”¶å–æ•°æ®ï¼šsystem call(udp recv)->buffer->queue->data
+// 1ã€streamæ¨¡å¼ï¼Œä¸€æ¬¡åªå–ä¸€ä¸ªsegment
+// 2ã€åŒ…æ¨¡å¼ï¼Œä¸€æ¬¡å–å°½é‡å¤šçš„æ•°æ®ï¼ˆå°† frg 5,4,3,2,1,0ç³»åˆ—æ•°æ®éƒ½å–å‡ºï¼‰
 int ikcp_recv(ikcpcb *kcp, char *buffer, int len)
 {
 	struct IQUEUEHEAD *p;
@@ -378,7 +378,7 @@ int ikcp_recv(ikcpcb *kcp, char *buffer, int len)
 	if (peeksize > len) 
 		return -3;
 
-	// Èç¹ûµ±Ç°µÄ recv_queue ³ß´ç´óÓÚµÈÓÚ½ÓÊÕ´°¿Ú´óĞ¡£¬ÔòÆô¶¯¿ìËÙ»Ö¸´Ä£Ê½
+	// å¦‚æœå½“å‰çš„ recv_queue å°ºå¯¸å¤§äºç­‰äºæ¥æ”¶çª—å£å¤§å°ï¼Œåˆ™å¯åŠ¨å¿«é€Ÿæ¢å¤æ¨¡å¼
 	if (kcp->nrcv_que >= kcp->rcv_wnd)
 		recover = 1;
 
@@ -403,7 +403,7 @@ int ikcp_recv(ikcpcb *kcp, char *buffer, int len)
 		if (ispeek == 0) {
 			iqueue_del(&seg->node);
 			ikcp_segment_delete(kcp, seg);
-			// ´Ó recv_queue ÖĞÈ¡³öÊı¾İ¸øÓÃ»§ºó£¬½ÓÊÕ¶ÓÁĞ´óĞ¡¼õ1
+			// ä» recv_queue ä¸­å–å‡ºæ•°æ®ç»™ç”¨æˆ·åï¼Œæ¥æ”¶é˜Ÿåˆ—å¤§å°å‡1
 			kcp->nrcv_que--;
 		}
 
@@ -414,12 +414,12 @@ int ikcp_recv(ikcpcb *kcp, char *buffer, int len)
 	assert(len == peeksize);
 
 	// move available data from rcv_buf -> rcv_queue
-	// ½« rcv_buf ÖĞµÄÊı¾İÅ²µ½ rcv_queue ÖĞ
-	// segment ´Ó rcv_buf µÄÍ·²¿ÒÆ¶¯µ½ rcv_queue µÄÎ²²¿
-	// nrcv_que¼Ó1£¬nrcv_buf¼õ1,rcv_nxt¼Ó1
+	// å°† rcv_buf ä¸­çš„æ•°æ®æŒªåˆ° rcv_queue ä¸­
+	// segment ä» rcv_buf çš„å¤´éƒ¨ç§»åŠ¨åˆ° rcv_queue çš„å°¾éƒ¨
+	// nrcv_queåŠ 1ï¼Œnrcv_bufå‡1,rcv_nxtåŠ 1
 	//
-	// Èç¹û rcv_buf ÖĞµÄ segment µÄ sn ºÍ rcv_nxt Ò»ÖÂÇÒ rcv_queue µÄ´óĞ¡Ã»ÓĞ³¬¹ı±¾µØ´°¿Ú´óĞ¡£¬
-	// Ôò´ÓbufÖĞÈ¡³ö·ÅÈëqueue£¬·ñÔòÊı¾İ½«»º´æµ½ buf ÖĞ
+	// å¦‚æœ rcv_buf ä¸­çš„ segment çš„ sn å’Œ rcv_nxt ä¸€è‡´ä¸” rcv_queue çš„å¤§å°æ²¡æœ‰è¶…è¿‡æœ¬åœ°çª—å£å¤§å°ï¼Œ
+	// åˆ™ä»bufä¸­å–å‡ºæ”¾å…¥queueï¼Œå¦åˆ™æ•°æ®å°†ç¼“å­˜åˆ° buf ä¸­
 	while (! iqueue_is_empty(&kcp->rcv_buf)) {
 		IKCPSEG *seg = iqueue_entry(kcp->rcv_buf.next, IKCPSEG, node);
 		if (seg->sn == kcp->rcv_nxt && kcp->nrcv_que < kcp->rcv_wnd) {
@@ -434,8 +434,8 @@ int ikcp_recv(ikcpcb *kcp, char *buffer, int len)
 	}
 
 	// fast recover
-	// Èç¹ûÆô¶¯ÁË¿ìËÙ»Ö¸´Ä£Ê½£¬²¢ÇÒµ±Ç°µÄ½ÓÊÕ¶ÓÁĞ³ß´çĞ¡ÓÚ´°¿Ú´óĞ¡£¬
-	// ÔòĞèÒª¸æËß¶Ô·½ÎÒµÄ´°¿Ú´óĞ¡
+	// å¦‚æœå¯åŠ¨äº†å¿«é€Ÿæ¢å¤æ¨¡å¼ï¼Œå¹¶ä¸”å½“å‰çš„æ¥æ”¶é˜Ÿåˆ—å°ºå¯¸å°äºçª—å£å¤§å°ï¼Œ
+	// åˆ™éœ€è¦å‘Šè¯‰å¯¹æ–¹æˆ‘çš„çª—å£å¤§å°
 	if (kcp->nrcv_que < kcp->rcv_wnd && recover) {
 		// ready to send back IKCP_CMD_WINS in ikcp_flush
 		// tell remote my window size
@@ -449,10 +449,10 @@ int ikcp_recv(ikcpcb *kcp, char *buffer, int len)
 //---------------------------------------------------------------------
 // peek data size
 //---------------------------------------------------------------------
-// ¼ÆËãÓÃ»§¿ÉÒÔÍ¨¹ırecv»ñÈ¡¶àÉÙÊı¾İ£¬´Órecv_queueÖĞ¼ÆËã
-// ¼ÆËã·½·¨£º
-// 1¡¢stream´«ÊäÄ£Ê½£¬ÔòÃ¿´Î¶¼Ö»È¡rcv_queueÍ·²¿µÄÒ»¸ösegment
-// 2¡¢°üÄ£Ê½£¬´Ó rcv_queue µÄÍ·²¿¿ªÊ¼£¬ÒÀ´Î¶ÁÈ¡ frg Îª 5,4,3,2,1Ö±µ½0µÄÕâĞ© segment ²¢¼ÆËãËûÃÇµÄ´óĞ¡Ö®ºÍ
+// è®¡ç®—ç”¨æˆ·å¯ä»¥é€šè¿‡recvè·å–å¤šå°‘æ•°æ®ï¼Œä»recv_queueä¸­è®¡ç®—
+// è®¡ç®—æ–¹æ³•ï¼š
+// 1ã€streamä¼ è¾“æ¨¡å¼ï¼Œåˆ™æ¯æ¬¡éƒ½åªå–rcv_queueå¤´éƒ¨çš„ä¸€ä¸ªsegment
+// 2ã€åŒ…æ¨¡å¼ï¼Œä» rcv_queue çš„å¤´éƒ¨å¼€å§‹ï¼Œä¾æ¬¡è¯»å– frg ä¸º 5,4,3,2,1ç›´åˆ°0çš„è¿™äº› segment å¹¶è®¡ç®—ä»–ä»¬çš„å¤§å°ä¹‹å’Œ
 int ikcp_peeksize(const ikcpcb *kcp)
 {
 	struct IQUEUEHEAD *p;
@@ -482,8 +482,8 @@ int ikcp_peeksize(const ikcpcb *kcp)
 // user/upper level send, returns below zero for error
 //---------------------------------------------------------------------
 
-// ·¢ËÍÊı¾İ£ºdata->queue->buffer->system call (udp send)
-// snd_queue ÊÇÒ»¸öÑ­»·Ë«ÏòÁ´±í£¬·¢ËÍÊı¾İÊ±£¬Êı¾İ±»·Ö³ÉÈô¸Émss´óĞ¡µÄsegment²¢±»·ÅÈë snd_queue ¡°Î²¶Ë¡±
+// å‘é€æ•°æ®ï¼šdata->queue->buffer->system call (udp send)
+// snd_queue æ˜¯ä¸€ä¸ªå¾ªç¯åŒå‘é“¾è¡¨ï¼Œå‘é€æ•°æ®æ—¶ï¼Œæ•°æ®è¢«åˆ†æˆè‹¥å¹²msså¤§å°çš„segmentå¹¶è¢«æ”¾å…¥ snd_queue â€œå°¾ç«¯â€
 int ikcp_send(ikcpcb *kcp, const char *buffer, int len)
 {
 	IKCPSEG *seg;
@@ -492,8 +492,8 @@ int ikcp_send(ikcpcb *kcp, const char *buffer, int len)
 	assert(kcp->mss > 0);
 	if (len < 0) return -1;
 
-	// Èç¹ûÊÇÁ÷Ê½´«ÊäÄ£Ê½£¬Ôò»áÔÚ snd_queue µÄÎ²°ÍÅĞ¶ÏÕâ¸ö segment ÊÇ·ñÂú³ß´çÁË£¬Èç¹ûÃ»ÓĞÂú£¬ÔòÌîÂú¡£
-	// ±»ÌîÂúµÄÕâ¸ö segment frg Îª 0
+	// å¦‚æœæ˜¯æµå¼ä¼ è¾“æ¨¡å¼ï¼Œåˆ™ä¼šåœ¨ snd_queue çš„å°¾å·´åˆ¤æ–­è¿™ä¸ª segment æ˜¯å¦æ»¡å°ºå¯¸äº†ï¼Œå¦‚æœæ²¡æœ‰æ»¡ï¼Œåˆ™å¡«æ»¡ã€‚
+	// è¢«å¡«æ»¡çš„è¿™ä¸ª segment frg ä¸º 0
 	if (kcp->stream != 0) {
 		if (!iqueue_is_empty(&kcp->snd_queue)) {
 			IKCPSEG *old = iqueue_entry(kcp->snd_queue.prev, IKCPSEG, node);
@@ -523,11 +523,11 @@ int ikcp_send(ikcpcb *kcp, const char *buffer, int len)
 		}
 	}
 
-	// ½ÓÏÂÀ´£¬°ÑÊ£ÓàÊı¾İ£¨³¤¶ÈÎªlen£©°´ÕÕ mss ´óĞ¡Ò»¸ö£¬·Ö³É count ¸ö
+	// æ¥ä¸‹æ¥ï¼ŒæŠŠå‰©ä½™æ•°æ®ï¼ˆé•¿åº¦ä¸ºlenï¼‰æŒ‰ç…§ mss å¤§å°ä¸€ä¸ªï¼Œåˆ†æˆ count ä¸ª
 	if (len <= (int)kcp->mss) count = 1;
 	else count = (len + kcp->mss - 1) / kcp->mss;
 
-	// Ò»´ÎĞÔ·¢ËÍµÄ segment ²»ÄÜ³¬¹ı 255 ¸ö
+	// ä¸€æ¬¡æ€§å‘é€çš„ segment ä¸èƒ½è¶…è¿‡ 255 ä¸ª
 	if (count > 255) return -2;
 
 	if (count == 0) count = 1;
@@ -544,11 +544,11 @@ int ikcp_send(ikcpcb *kcp, const char *buffer, int len)
 			memcpy(seg->data, buffer, size);
 		}
 		seg->len = size;
-		// Èç¹ûÊÇÁ÷Ä£Ê½£¬Ôò frg Îª 0
-		// Èç¹ûÊÇ°üÄ£Ê½£¬Ôò frg Îª 5 4 3 2 1 0 ÕâÑù
+		// å¦‚æœæ˜¯æµæ¨¡å¼ï¼Œåˆ™ frg ä¸º 0
+		// å¦‚æœæ˜¯åŒ…æ¨¡å¼ï¼Œåˆ™ frg ä¸º 5 4 3 2 1 0 è¿™æ ·
 		seg->frg = (kcp->stream == 0)? (count - i - 1) : 0;
 		iqueue_init(&seg->node);
-		// segment ±»ÒÀ´Î¼ÓÈëµ½ send_queue µÄÎ²²¿
+		// segment è¢«ä¾æ¬¡åŠ å…¥åˆ° send_queue çš„å°¾éƒ¨
 		iqueue_add_tail(&seg->node, &kcp->snd_queue);
 		kcp->nsnd_que++;
 		if (buffer) {
@@ -564,8 +564,8 @@ int ikcp_send(ikcpcb *kcp, const char *buffer, int len)
 //---------------------------------------------------------------------
 // parse ack
 //---------------------------------------------------------------------
-// °´ÕÕÊäÈëµÄ rtt ¸üĞÂ rto£¬rto ±»ÏŞÖÆÔÚ×î´óÖµºÍ×îĞ¡ÖµÖ®¼ä
-// rto ÓÃÓÚ½ÓÊÕ ack µÄ³¬Ê±
+// æŒ‰ç…§è¾“å…¥çš„ rtt æ›´æ–° rtoï¼Œrto è¢«é™åˆ¶åœ¨æœ€å¤§å€¼å’Œæœ€å°å€¼ä¹‹é—´
+// rto ç”¨äºæ¥æ”¶ ack çš„è¶…æ—¶
 static void ikcp_update_ack(ikcpcb *kcp, IINT32 rtt)
 {
 	IINT32 rto = 0;
@@ -583,11 +583,11 @@ static void ikcp_update_ack(ikcpcb *kcp, IINT32 rtt)
 	kcp->rx_rto = _ibound_(kcp->rx_minrto, rto, IKCP_RTO_MAX);
 }
 
-// ¼ÆËã snd_una£¬Ïàµ±ÓÚ´°¿Ú×ó±ßÑØÓÒÒÆ
-// Èç¹û send_buf ÖĞ»¹ÓĞÊı¾İ£¬Ôò snd_una ±äÎª snd_buf Ê×²¿Êı¾İµÄĞòÁĞºÅ
-// ·ñÔò una = nxt£¨Ã»ÓĞÊı¾İµÈ´ı ack£©
-// ÑÔÍâÖ®Òâ£º
-// send_buf ÖĞµÄËùÓĞµÄÊı¾İ¶¼ÊÇÎ´È·ÈÏµÄ
+// è®¡ç®— snd_unaï¼Œç›¸å½“äºçª—å£å·¦è¾¹æ²¿å³ç§»
+// å¦‚æœ send_buf ä¸­è¿˜æœ‰æ•°æ®ï¼Œåˆ™ snd_una å˜ä¸º snd_buf é¦–éƒ¨æ•°æ®çš„åºåˆ—å·
+// å¦åˆ™ una = nxtï¼ˆæ²¡æœ‰æ•°æ®ç­‰å¾… ackï¼‰
+// è¨€å¤–ä¹‹æ„ï¼š
+// send_buf ä¸­çš„æ‰€æœ‰çš„æ•°æ®éƒ½æ˜¯æœªç¡®è®¤çš„
 static void ikcp_shrink_buf(ikcpcb *kcp)
 {
 	struct IQUEUEHEAD *p = kcp->snd_buf.next;
@@ -599,15 +599,15 @@ static void ikcp_shrink_buf(ikcpcb *kcp)
 	}
 }
 
-// ´¦ÀíÊÕµ½µÄÊı¾İ£¬´Ó snd_buf ÖĞÉ¾µôÒÑ¾­È·ÈÏµÄÊı¾İ
-// snd_buf ÖĞÁôÏÂµÄÊı¾İ¶¼ÊÇÎ´È·ÈÏµÄ£¬snd_buf Ê×²¿µÄÊı¾İ¾ÍÊÇ una
-// Õâ¸öĞòÁĞºÅÊÇ snd_buf ÖĞ×îĞ¡µÄÒ»¸ö
+// å¤„ç†æ”¶åˆ°çš„æ•°æ®ï¼Œä» snd_buf ä¸­åˆ æ‰å·²ç»ç¡®è®¤çš„æ•°æ®
+// snd_buf ä¸­ç•™ä¸‹çš„æ•°æ®éƒ½æ˜¯æœªç¡®è®¤çš„ï¼Œsnd_buf é¦–éƒ¨çš„æ•°æ®å°±æ˜¯ una
+// è¿™ä¸ªåºåˆ—å·æ˜¯ snd_buf ä¸­æœ€å°çš„ä¸€ä¸ª
 static void ikcp_parse_ack(ikcpcb *kcp, IUINT32 sn)
 {
 	struct IQUEUEHEAD *p, *next;
 
-	// Èç¹ûÊÕµ½ÖØ¸´Êı¾İ£¨ĞòºÅ±È una »¹Ğ¡£©»òÕßÊÕµ½»¹Ã»ÓĞ·¢µÄÊı¾İ£¨ĞòÁĞºÅ±È nxt »¹´ó£¬Õâ¸öÀíÂÛÉÏ²»¿ÉÄÜ£¬³ı·Ç³ÌĞòĞ´´íÁË£©
-	// Ôò²»×÷´¦Àí
+	// å¦‚æœæ”¶åˆ°é‡å¤æ•°æ®ï¼ˆåºå·æ¯” una è¿˜å°ï¼‰æˆ–è€…æ”¶åˆ°è¿˜æ²¡æœ‰å‘çš„æ•°æ®ï¼ˆåºåˆ—å·æ¯” nxt è¿˜å¤§ï¼Œè¿™ä¸ªç†è®ºä¸Šä¸å¯èƒ½ï¼Œé™¤éç¨‹åºå†™é”™äº†ï¼‰
+	// åˆ™ä¸ä½œå¤„ç†
 	if (_itimediff(sn, kcp->snd_una) < 0 || _itimediff(sn, kcp->snd_nxt) >= 0)
 		return;
 
@@ -620,15 +620,15 @@ static void ikcp_parse_ack(ikcpcb *kcp, IUINT32 sn)
 			kcp->nsnd_buf--;
 			break;
 		}
-		// send_buf ÖĞµÄÊı¾İ´ÓÊ×²¿¿ªÊ¼ÍùºóĞòÁĞºÅÊÇÔ½À´Ô½´óµÄ
-		// Èç¹ûÊÕµ½µÄÊı¾İĞòÁĞºÅ±È send_buf ÖĞÄ³¸öĞ¡£¬ÔòºóÃæµÄ¿Ï¶¨²»ÓÃ¿¼ÂÇÁË
+		// send_buf ä¸­çš„æ•°æ®ä»é¦–éƒ¨å¼€å§‹å¾€ååºåˆ—å·æ˜¯è¶Šæ¥è¶Šå¤§çš„
+		// å¦‚æœæ”¶åˆ°çš„æ•°æ®åºåˆ—å·æ¯” send_buf ä¸­æŸä¸ªå°ï¼Œåˆ™åé¢çš„è‚¯å®šä¸ç”¨è€ƒè™‘äº†
 		if (_itimediff(sn, seg->sn) < 0) {
 			break;
 		}
 	}
 }
 
-// ´¦ÀíÊÕµ½µÄÊı¾İ£¬ºÍ parse_ack Ïà±È£¬parse_una ¿ÉÒÔÒ»´ÎĞÔÈ·ÈÏ¸ü¶àÊı¾İ
+// å¤„ç†æ”¶åˆ°çš„æ•°æ®ï¼Œå’Œ parse_ack ç›¸æ¯”ï¼Œparse_una å¯ä»¥ä¸€æ¬¡æ€§ç¡®è®¤æ›´å¤šæ•°æ®
 static void ikcp_parse_una(ikcpcb *kcp, IUINT32 una)
 {
 	struct IQUEUEHEAD *p, *next;
@@ -645,7 +645,7 @@ static void ikcp_parse_una(ikcpcb *kcp, IUINT32 una)
 	}
 }
 
-// ´¦ÀíÊÕµ½µÄÊı¾İ£¬°Ñ snd_buf ÖĞ·¢³ö½ÏÔçµ«ÊÇÎ´È·ÈÏµÄÊı¾İ fastack++
+// å¤„ç†æ”¶åˆ°çš„æ•°æ®ï¼ŒæŠŠ snd_buf ä¸­å‘å‡ºè¾ƒæ—©ä½†æ˜¯æœªç¡®è®¤çš„æ•°æ® fastack++
 static void ikcp_parse_fastack(ikcpcb *kcp, IUINT32 sn)
 {
 	struct IQUEUEHEAD *p, *next;
@@ -669,8 +669,8 @@ static void ikcp_parse_fastack(ikcpcb *kcp, IUINT32 sn)
 //---------------------------------------------------------------------
 // ack append
 //---------------------------------------------------------------------
-// ÔÚ±¾kcpÁ¬½ÓÖĞ±£´æÒ»¸öÊı¾İµÄĞòÁĞºÅºÍÊ±¼ä´Á
-// acklist ÖĞÒÀ´Î±£´æÁË ackcount ¸ö(sn, ts)
+// åœ¨æœ¬kcpè¿æ¥ä¸­ä¿å­˜ä¸€ä¸ªæ•°æ®çš„åºåˆ—å·å’Œæ—¶é—´æˆ³
+// acklist ä¸­ä¾æ¬¡ä¿å­˜äº† ackcount ä¸ª(sn, ts)
 static void ikcp_ack_push(ikcpcb *kcp, IUINT32 sn, IUINT32 ts)
 {
 	size_t newsize = kcp->ackcount + 1;
@@ -707,7 +707,7 @@ static void ikcp_ack_push(ikcpcb *kcp, IUINT32 sn, IUINT32 ts)
 	kcp->ackcount++;
 }
 
-// È¡³öÎ»ÓÚ p µÄĞòÁĞºÅºÍÊ±¼ä´Á
+// å–å‡ºä½äº p çš„åºåˆ—å·å’Œæ—¶é—´æˆ³
 static void ikcp_ack_get(const ikcpcb *kcp, int p, IUINT32 *sn, IUINT32 *ts)
 {
 	if (sn) sn[0] = kcp->acklist[p * 2 + 0];
@@ -718,37 +718,37 @@ static void ikcp_ack_get(const ikcpcb *kcp, int p, IUINT32 *sn, IUINT32 *ts)
 //---------------------------------------------------------------------
 // parse data
 //---------------------------------------------------------------------
-// ½«ÏµÍ³µ×²ã·¢À´µÄÊı¾İ´æÈë recv_buf µÄÎ²²¿
-// ²¢ÇÒ½« recv_buf ÖĞµÄ²¿·ÖÁ¬ĞøÊı¾İÅ²¶¯µ½ recv_queue ÖĞ
+// å°†ç³»ç»Ÿåº•å±‚å‘æ¥çš„æ•°æ®å­˜å…¥ recv_buf çš„å°¾éƒ¨
+// å¹¶ä¸”å°† recv_buf ä¸­çš„éƒ¨åˆ†è¿ç»­æ•°æ®æŒªåŠ¨åˆ° recv_queue ä¸­
 void ikcp_parse_data(ikcpcb *kcp, IKCPSEG *newseg)
 {
 	struct IQUEUEHEAD *p, *prev;
 	IUINT32 sn = newseg->sn;
 	int repeat = 0;
 	
-	// Ïú»ÙÎŞĞ§Êı¾İ
+	// é”€æ¯æ— æ•ˆæ•°æ®
 	if (_itimediff(sn, kcp->rcv_nxt + kcp->rcv_wnd) >= 0 ||
 		_itimediff(sn, kcp->rcv_nxt) < 0) {
 		ikcp_segment_delete(kcp, newseg);
 		return;
 	}
-	// ĞÂÊı¾İ²åÈë recv_buf Î²²¿
-	// Õı³£Çé¿öÏÂ£¬ĞÂÊı¾İµÄĞòÁĞºÅÒª±È recv_buf Î²²¿Êı¾İµÄĞòÁĞºÅ´ó
+	// æ–°æ•°æ®æ’å…¥ recv_buf å°¾éƒ¨
+	// æ­£å¸¸æƒ…å†µä¸‹ï¼Œæ–°æ•°æ®çš„åºåˆ—å·è¦æ¯” recv_buf å°¾éƒ¨æ•°æ®çš„åºåˆ—å·å¤§
 	for (p = kcp->rcv_buf.prev; p != &kcp->rcv_buf; p = prev) {
 		IKCPSEG *seg = iqueue_entry(p, IKCPSEG, node);
 		prev = p->prev;
-		// ¼ì²âÖØ¸´Êı¾İ
+		// æ£€æµ‹é‡å¤æ•°æ®
 		if (seg->sn == sn) {
 			repeat = 1;
 			break;
 		}
-		// ÕâÊÇÒ»°ãÇé¿ö
+		// è¿™æ˜¯ä¸€èˆ¬æƒ…å†µ
 		if (_itimediff(sn, seg->sn) > 0) {
 			break;
 		}
 	}
-	// Èç¹ûÃ»ÓĞÖØ¸´Êı¾İ£¬Ôò°ÑĞÂÊı¾İ¼ÓÈë recv_buf
-	// ĞÂÊı¾İ»á°´ĞòÁĞºÅµÄ´óĞ¡Ë³Ğò²åÈë
+	// å¦‚æœæ²¡æœ‰é‡å¤æ•°æ®ï¼Œåˆ™æŠŠæ–°æ•°æ®åŠ å…¥ recv_buf
+	// æ–°æ•°æ®ä¼šæŒ‰åºåˆ—å·çš„å¤§å°é¡ºåºæ’å…¥
 	if (repeat == 0) {
 		iqueue_init(&newseg->node);
 		iqueue_add(&newseg->node, p);
@@ -763,9 +763,9 @@ void ikcp_parse_data(ikcpcb *kcp, IKCPSEG *newseg)
 #endif
 
 	// move available data from rcv_buf -> rcv_queue
-	// ½«Êı¾İ´Ó rcv_buf Å²µ½ rcv_queue
-	// Êı¾İ½«´Ó rcv_buf Ê×²¿¿ªÊ¼Å²¶¯£¬Å²¶¯µÄÒ»ÏµÁĞÊı¾İÊÇÁ¬ĞøµÄ
-	// Å²¶¯µÄÊı¾İÒÀ´Î·ÅÈë rcv_queue Î²²¿
+	// å°†æ•°æ®ä» rcv_buf æŒªåˆ° rcv_queue
+	// æ•°æ®å°†ä» rcv_buf é¦–éƒ¨å¼€å§‹æŒªåŠ¨ï¼ŒæŒªåŠ¨çš„ä¸€ç³»åˆ—æ•°æ®æ˜¯è¿ç»­çš„
+	// æŒªåŠ¨çš„æ•°æ®ä¾æ¬¡æ”¾å…¥ rcv_queue å°¾éƒ¨
 	while (! iqueue_is_empty(&kcp->rcv_buf)) {
 		IKCPSEG *seg = iqueue_entry(kcp->rcv_buf.next, IKCPSEG, node);
 		if (seg->sn == kcp->rcv_nxt && kcp->nrcv_que < kcp->rcv_wnd) {
@@ -795,7 +795,7 @@ void ikcp_parse_data(ikcpcb *kcp, IKCPSEG *newseg)
 // input data
 //---------------------------------------------------------------------
 // system call(udp recv)->recv_buf->recv_queue->data
-// ½ÓÊÕÏµÍ³µ×²ãÊÕµ½µÄÊı¾İ£¬´¦Àíºó½øÈë recv_buf
+// æ¥æ”¶ç³»ç»Ÿåº•å±‚æ”¶åˆ°çš„æ•°æ®ï¼Œå¤„ç†åè¿›å…¥ recv_buf
 // 
 int ikcp_input(ikcpcb *kcp, const char *data, long size)
 {
@@ -835,7 +835,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 		if (cmd != IKCP_CMD_PUSH && cmd != IKCP_CMD_ACK &&
 			cmd != IKCP_CMD_WASK && cmd != IKCP_CMD_WINS) 
 			return -3;
-		// ¼ÇÂ¼¶Ô·½´°¿Ú´óĞ¡£¨¿´ÆğÀ´Ã¿´Î¶¼ÊÇÒ»ÑùµÄ»òÕßÖ»¹ØĞÄ×îºóÒ»¸ö£©
+		// è®°å½•å¯¹æ–¹çª—å£å¤§å°ï¼ˆçœ‹èµ·æ¥æ¯æ¬¡éƒ½æ˜¯ä¸€æ ·çš„æˆ–è€…åªå…³å¿ƒæœ€åä¸€ä¸ªï¼‰
 		kcp->rmt_wnd = wnd;
 		ikcp_parse_una(kcp, una);
 		ikcp_shrink_buf(kcp);
@@ -867,7 +867,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 					"input psh: sn=%lu ts=%lu", sn, ts);
 			}
 			if (_itimediff(sn, kcp->rcv_nxt + kcp->rcv_wnd) < 0) {
-				ikcp_ack_push(kcp, sn, ts);// ÕâÀï±£´æÊÕµ½µÄÊı¾İµÄĞòÁĞºÅ£¬ÎªÒÔºó·µ»Ø ack ×ö×¼±¸
+				ikcp_ack_push(kcp, sn, ts);// è¿™é‡Œä¿å­˜æ”¶åˆ°çš„æ•°æ®çš„åºåˆ—å·ï¼Œä¸ºä»¥åè¿”å› ack åšå‡†å¤‡
 				if (_itimediff(sn, kcp->rcv_nxt) >= 0) {
 					seg = ikcp_segment_new(kcp, len);
 					seg->conv = conv;
@@ -883,7 +883,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 						memcpy(seg->data, data, len);
 					}
 
-					ikcp_parse_data(kcp, seg);// ´æÊı¾İ
+					ikcp_parse_data(kcp, seg);// å­˜æ•°æ®
 				}
 			}
 		}
@@ -913,7 +913,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 	if (flag != 0) {
 		ikcp_parse_fastack(kcp, maxack);
 	}
-	// ¸üĞÂÓµÈû´°¿Ú´óĞ¡
+	// æ›´æ–°æ‹¥å¡çª—å£å¤§å°
 	// todo
 	if (_itimediff(kcp->snd_una, una) > 0) {
 		if (kcp->cwnd < kcp->rmt_wnd) {
@@ -987,15 +987,15 @@ void ikcp_flush(ikcpcb *kcp)
 	seg.cmd = IKCP_CMD_ACK;
 	seg.frg = 0;
 	seg.wnd = ikcp_wnd_unused(kcp);
-	seg.una = kcp->rcv_nxt; // una Îª rcv_nxt
+	seg.una = kcp->rcv_nxt; // una ä¸º rcv_nxt
 	seg.len = 0;
 	seg.sn = 0;
 	seg.ts = 0;
 
 	// flush acknowledges
-	// ´¦Àí¶Ô·½µÄ CMD_PUSH Êı¾İ£¬·µ»Ø ack
-	// cmd Ä¬ÈÏÎª IKCP_CMD_ACK
-	// send_queue ÀïÃæÖ»°üº¬ÓÃ»§Êı¾İ£¬ack ÔÚ´Ë´¦µ¥¶À¹¹Ôì segment ½øĞĞ·¢ËÍ
+	// å¤„ç†å¯¹æ–¹çš„ CMD_PUSH æ•°æ®ï¼Œè¿”å› ack
+	// cmd é»˜è®¤ä¸º IKCP_CMD_ACK
+	// send_queue é‡Œé¢åªåŒ…å«ç”¨æˆ·æ•°æ®ï¼Œack åœ¨æ­¤å¤„å•ç‹¬æ„é€  segment è¿›è¡Œå‘é€
 	count = kcp->ackcount;
 	for (i = 0; i < count; i++) {
 		size = (int)(ptr - buffer);
@@ -1010,8 +1010,8 @@ void ikcp_flush(ikcpcb *kcp)
 	kcp->ackcount = 0;
 
 	// probe window size (if remote window size equals zero)
-	// Èç¹û¶Ô·½´°¿Ú´óĞ¡Îª0£¬Ôò¸üĞÂ´°¿ÚÌ½²â³¬Ê±
-	// ÉèÖÃ´°¿ÚÌ½²âÌ½Õë
+	// å¦‚æœå¯¹æ–¹çª—å£å¤§å°ä¸º0ï¼Œåˆ™æ›´æ–°çª—å£æ¢æµ‹è¶…æ—¶
+	// è®¾ç½®çª—å£æ¢æµ‹æ¢é’ˆ
 	if (kcp->rmt_wnd == 0) {
 		if (kcp->probe_wait == 0) {
 			kcp->probe_wait = IKCP_PROBE_INIT;
@@ -1034,7 +1034,7 @@ void ikcp_flush(ikcpcb *kcp)
 	}
 
 	// flush window probing commands
-	// ¼ì²â´°¿Ú³ß´çÌ½Õë£¨Ì½²â¶Ô·½´°¿Ú£©£¬²¢¹¹Ôìsegment
+	// æ£€æµ‹çª—å£å°ºå¯¸æ¢é’ˆï¼ˆæ¢æµ‹å¯¹æ–¹çª—å£ï¼‰ï¼Œå¹¶æ„é€ segment
 	if (kcp->probe & IKCP_ASK_SEND) {
 		seg.cmd = IKCP_CMD_WASK;
 		size = (int)(ptr - buffer);
@@ -1046,7 +1046,7 @@ void ikcp_flush(ikcpcb *kcp)
 	}
 
 	// flush window probing commands
-	// ¼ì²â´°¿Ú³ß´çÌ½Õë£¨¶Ô·½ÇëÇóÎÒµÄ´°¿Ú£©£¬²¢¹¹Ôìsegment
+	// æ£€æµ‹çª—å£å°ºå¯¸æ¢é’ˆï¼ˆå¯¹æ–¹è¯·æ±‚æˆ‘çš„çª—å£ï¼‰ï¼Œå¹¶æ„é€ segment
 	if (kcp->probe & IKCP_ASK_TELL) {
 		seg.cmd = IKCP_CMD_WINS;
 		size = (int)(ptr - buffer);
@@ -1063,10 +1063,10 @@ void ikcp_flush(ikcpcb *kcp)
 	cwnd = _imin_(kcp->snd_wnd, kcp->rmt_wnd);
 	if (kcp->nocwnd == 0) cwnd = _imin_(kcp->cwnd, cwnd);
 
-	// ½«Êı¾İ´Ó send_queue ·Åµ½ send_buf ÖĞ
-	// cwnd Îª×îÖÕ´°¿Ú´óĞ¡£¬ËüÊÇ±¾µØ´°¿Ú¡¢Ô¶¶Ë´°¿ÚµÄ½ÏĞ¡Öµ
-	// Èç¹û kcp Á¬½ÓÉèÖÃÁË nocwnd Îª 0£¬Ôò»¹ÒªºÍ kcp->cwnd ×ö±È½Ï²¢È¡½ÏĞ¡Öµ
-	// cwnd µÄ´óĞ¡¾ö¶¨ÁËÄÜ·¢³öµÄÊı¾İÁ¿
+	// å°†æ•°æ®ä» send_queue æ”¾åˆ° send_buf ä¸­
+	// cwnd ä¸ºæœ€ç»ˆçª—å£å¤§å°ï¼Œå®ƒæ˜¯æœ¬åœ°çª—å£ã€è¿œç«¯çª—å£çš„è¾ƒå°å€¼
+	// å¦‚æœ kcp è¿æ¥è®¾ç½®äº† nocwnd ä¸º 0ï¼Œåˆ™è¿˜è¦å’Œ kcp->cwnd åšæ¯”è¾ƒå¹¶å–è¾ƒå°å€¼
+	// cwnd çš„å¤§å°å†³å®šäº†èƒ½å‘å‡ºçš„æ•°æ®é‡
 	while (_itimediff(kcp->snd_nxt, kcp->snd_una + cwnd) < 0) {
 		IKCPSEG *newseg;
 		if (iqueue_is_empty(&kcp->snd_queue)) break;
@@ -1079,11 +1079,11 @@ void ikcp_flush(ikcpcb *kcp)
 		kcp->nsnd_buf++;
 
 		newseg->conv = kcp->conv;
-		newseg->cmd = IKCP_CMD_PUSH; // °üº¬ÓÃ»§Êı¾İµÄ segment µÄ cmd Îª IKCP_CMD_PUSH
+		newseg->cmd = IKCP_CMD_PUSH; // åŒ…å«ç”¨æˆ·æ•°æ®çš„ segment çš„ cmd ä¸º IKCP_CMD_PUSH
 		newseg->wnd = seg.wnd;
 		newseg->ts = current;
-		newseg->sn = kcp->snd_nxt++; // sn Ã¿¸öÊı¾İ°ü¶¼²»Í¬£¬ÒÀ´ÎµİÔö
-		newseg->una = kcp->rcv_nxt; // una Îª rcv_nxt£¬Í¬Ò»Åú·¢³öµÄÓÃ»§Êı¾İ°ü£¬una Ò»Ñù
+		newseg->sn = kcp->snd_nxt++; // sn æ¯ä¸ªæ•°æ®åŒ…éƒ½ä¸åŒï¼Œä¾æ¬¡é€’å¢
+		newseg->una = kcp->rcv_nxt; // una ä¸º rcv_nxtï¼ŒåŒä¸€æ‰¹å‘å‡ºçš„ç”¨æˆ·æ•°æ®åŒ…ï¼Œuna ä¸€æ ·
 		newseg->resendts = current;
 		newseg->rto = kcp->rx_rto;
 		newseg->fastack = 0;
@@ -1091,10 +1091,10 @@ void ikcp_flush(ikcpcb *kcp)
 	}
 
 	// calculate resent
-	// kcp->fastresend Îª kcp µÄÒ»¸öÉèÖÃÑ¡Ïî£¬±íÊ¾¿ìËÙÖØ´«
+	// kcp->fastresend ä¸º kcp çš„ä¸€ä¸ªè®¾ç½®é€‰é¡¹ï¼Œè¡¨ç¤ºå¿«é€Ÿé‡ä¼ 
 	resent = (kcp->fastresend > 0)? (IUINT32)kcp->fastresend : 0xffffffff;
-	// kcp->nodelay Í¬ÑùÊÇ kcp µÄÒ»¸öÉèÖÃÑ¡Ïî£¬±íÊ¾²»ÓÃÑÓ³Ùack
-	// ÉèÖÃÁË nodelay ºó£¬rtomin ±ä³É 0
+	// kcp->nodelay åŒæ ·æ˜¯ kcp çš„ä¸€ä¸ªè®¾ç½®é€‰é¡¹ï¼Œè¡¨ç¤ºä¸ç”¨å»¶è¿Ÿack
+	// è®¾ç½®äº† nodelay åï¼Œrtomin å˜æˆ 0
 	rtomin = (kcp->nodelay == 0)? (kcp->rx_rto >> 3) : 0;
 
 	// flush data segments
@@ -1105,26 +1105,26 @@ void ikcp_flush(ikcpcb *kcp)
 			needsend = 1;
 			segment->xmit++;
 			segment->rto = kcp->rx_rto;
-			segment->resendts = current + segment->rto + rtomin; // ³¬¹ıÕâ¸öÊ±¼ä´Á£¬²¢ÇÒÃ»ÓĞÊÕµ½ ack ÔòÖØ·¢
+			segment->resendts = current + segment->rto + rtomin; // è¶…è¿‡è¿™ä¸ªæ—¶é—´æˆ³ï¼Œå¹¶ä¸”æ²¡æœ‰æ”¶åˆ° ack åˆ™é‡å‘
 		}
-		else if (_itimediff(current, segment->resendts) >= 0) { // ³¬Ê±ÖØ·¢
+		else if (_itimediff(current, segment->resendts) >= 0) { // è¶…æ—¶é‡å‘
 			needsend = 1;
 			segment->xmit++;
-			kcp->xmit++; // kcp ¼ÇÂ¼ÖØ·¢µÄ°üÌåÊıÁ¿
-			if (kcp->nodelay == 0) { // Ôö¼Ó rto
+			kcp->xmit++; // kcp è®°å½•é‡å‘çš„åŒ…ä½“æ•°é‡
+			if (kcp->nodelay == 0) { // å¢åŠ  rto
 				segment->rto += kcp->rx_rto;
 			}	else {
 				segment->rto += kcp->rx_rto / 2;
 			}
-			segment->resendts = current + segment->rto; // ¸üĞÂÖØ·¢³¬Ê±Ê±¼ä´Á
-			lost = 1; // ¶ª°üÖØ·¢±ê¼Ç
+			segment->resendts = current + segment->rto; // æ›´æ–°é‡å‘è¶…æ—¶æ—¶é—´æˆ³
+			lost = 1; // ä¸¢åŒ…é‡å‘æ ‡è®°
 		}
-		else if (segment->fastack >= resent) { // Èç¹û fastack ±È fastresend ´óÔòÁ¢¼´·¢ËÍ
+		else if (segment->fastack >= resent) { // å¦‚æœ fastack æ¯” fastresend å¤§åˆ™ç«‹å³å‘é€
 			needsend = 1;
 			segment->xmit++;
-			segment->fastack = 0; // Çå³ı fastack
+			segment->fastack = 0; // æ¸…é™¤ fastack
 			segment->resendts = current + segment->rto;
-			change++; // Èç¹û³öÏÖ fastack£¬±ê¼ÇĞèÒª¸Ä±ä ssthresh
+			change++; // å¦‚æœå‡ºç° fastackï¼Œæ ‡è®°éœ€è¦æ”¹å˜ ssthresh
 		}
 
 		if (needsend) {
@@ -1148,16 +1148,16 @@ void ikcp_flush(ikcpcb *kcp)
 				ptr += segment->len;
 			}
 
-			// Èç¹û¸Ã segment ·¢ËÍµÄ´ÎÊı³¬¹ı kcp->dead_link Ôò±íÊ¾³öÏÖËÀÁ´
-			// dead_link Ä¬ÈÏÖµÊÇ IKCP_DEADLINK£¨20£©
+			// å¦‚æœè¯¥ segment å‘é€çš„æ¬¡æ•°è¶…è¿‡ kcp->dead_link åˆ™è¡¨ç¤ºå‡ºç°æ­»é“¾
+			// dead_link é»˜è®¤å€¼æ˜¯ IKCP_DEADLINKï¼ˆ20ï¼‰
 			if (segment->xmit >= kcp->dead_link) {
-				kcp->state = -1; // ÉèÖÃËÀÁ´×´Ì¬
+				kcp->state = -1; // è®¾ç½®æ­»é“¾çŠ¶æ€
 			}
 		}
 	}
 
 	// flash remain segments
-	// Ö»Òª ptr ²»µÈÓÚ buffer ËµÃ÷ÓĞÊı¾İµÈ´ı·¢ËÍ
+	// åªè¦ ptr ä¸ç­‰äº buffer è¯´æ˜æœ‰æ•°æ®ç­‰å¾…å‘é€
 	size = (int)(ptr - buffer);
 	if (size > 0) {
 		ikcp_output(kcp, buffer, size);
