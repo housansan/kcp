@@ -94,6 +94,12 @@ jiffies 是 linux 系统启动后产生的节拍数，启动时内核将这个�
 
 而 kcp 是在应用层实现的协议，所以也应该使用这种 tick 形式的时间戳。在 Windows 下，可以使用 QueryPerformanceFrequency 和 QueryPerformanceCounter 获取单调递增的 tick；在 linux 系统下可以用 clock()。
 
+### AIMD
+
+这个算法，很关键，待续。。
+
+[AIMD](https://en.wikipedia.org/wiki/Additive_increase/multiplicative_decrease)
+
 未完待续。。
 
 ### 特别感谢
