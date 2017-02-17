@@ -94,6 +94,15 @@ jiffies 是 linux 系统启动后产生的节拍数，启动时内核将这个�
 
 而 kcp 是在应用层实现的协议，所以也应该使用这种 tick 形式的时间戳。在 Windows 下，可以使用 QueryPerformanceFrequency 和 QueryPerformanceCounter 获取单调递增的 tick；在 linux 系统下可以用 clock()。
 
+### FEC
+
+FEC 这层在 UDP 之上，KCP 之下。FEC 的意义在于通过增加冗余编码，可以在部分数据丢失或者出错时利用冗余编码进行恢复。
+可以这样通俗理解，在 UDP 之上增加了 FEC 后，KCP 认为信道的丢包率从 15% 变成了 5%。
+
+FEC 对 KCP 来说是透明的。FEC 的容错能力也是有限的，如果丢包过多，那么就无法恢复数据，这时就只能通过上层 ARQ 实现重传。
+
+参考：[纠错编码](http://baike.baidu.com/item/%E7%BA%A0%E9%94%99%E7%BC%96%E7%A0%81)
+
 ### AIMD
 
 这个算法，很关键，待续。。
@@ -108,3 +117,4 @@ jiffies 是 linux 系统启动后产生的节拍数，启动时内核将这个�
 
 * 感谢 xtaci 提供的通信领域专业缩写的解释说明
 * 感谢 chice 提供的 timestamp 的正确含义和用法说明
+* 感谢 xtaci 和 chice 对 FEC 的详细解释
